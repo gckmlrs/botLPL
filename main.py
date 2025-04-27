@@ -113,4 +113,5 @@ async def on_ready():
 
 # === LANCEMENT ===
 keep_alive()
+print(f"TOKEN récupéré : {TOKEN}")
 bot.run(TOKEN)
