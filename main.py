@@ -6,10 +6,11 @@ from apscheduler.schedulers.asyncio import AsyncIOScheduler
 import asyncio
 from flask import Flask
 from threading import Thread
+
 import os
 
-# === CONFIGURATION ===
-TOKEN = os.getenv('TOKEN')
+TOKEN = os.getenv("TOKEN")
+
 CHANNEL_ID = 1366089873559392309
 
 API_URL = "https://esports-api.lolesports.com/persisted/gw/getSchedule"
