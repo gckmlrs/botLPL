@@ -11,6 +11,12 @@ import os
 
 TOKEN = os.getenv("TOKEN")
 
+if not TOKEN:
+    print("❌ Le token n'a pas été chargé.")
+else:
+    print(f"✅ Token chargé (début) : {TOKEN[:15]}...")
+
+
 CHANNEL_ID = 1366089873559392309
 
 API_URL = "https://esports-api.lolesports.com/persisted/gw/getSchedule"
@@ -113,5 +119,4 @@ async def on_ready():
 
 # === LANCEMENT ===
 keep_alive()
-print(f"TOKEN récupéré : {TOKEN}")
 bot.run(TOKEN)
