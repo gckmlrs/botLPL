@@ -4,7 +4,6 @@ import requests
 from bs4 import BeautifulSoup
 from datetime import datetime, timedelta, timezone
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
-import asyncio
 import os
 
 # === CONFIGURATION ===
@@ -103,18 +102,25 @@ async def send_weekly_planning():
         if notif_role:
             await channel.send(f"{notif_role.mention}\n{planning_text}")
 
-# === CLASSEMENT (Scraping Flashscore) ===
+# === CLASSEMENT (Scraping Flashscore avec Debug) ===
 FLASHSCORE_URL = "https://www.flashscore.fr/esports/league-of-legends/lpl/classement/"
 
 def get_lpl_classement_from_flashscore():
-    response = requests.get(FLASHSCORE_URL, headers={"User-Agent": "Mozilla/5.0"})
+    headers = {
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/90.0.4430.212 Safari/537.36",
+        "Accept-Language": "fr-FR,fr;q=0.9"
+    }
+    response = requests.get(FLASHSCORE_URL, headers=headers)
     if response.status_code != 200:
+        print(f"Erreur HTTP: {response.status_code}")
         return None
 
     soup = BeautifulSoup(response.text, 'html.parser')
-    classement_text = "📊 **Classement LPL (Source: Flashscore)** 📊\n"
 
     teams = soup.select('div.table__row')
+    print(f"Nombre d'équipes trouvées : {len(teams)}")
+
+    classement_text = "📊 **Classement LPL (Source: Flashscore)** 📊\n"
     rank = 1
     for team in teams:
         name_tag = team.select_one('div.table__cell--participant')
@@ -124,7 +130,7 @@ def get_lpl_classement_from_flashscore():
             stats = stats_tag.get_text(strip=True)
             classement_text += f"{rank}️⃣ {name} | {stats}\n"
             rank += 1
-        if rank > 10:  # Limite à top 10 pour éviter d'alourdir
+        if rank > 10:
             break
 
     return classement_text if rank > 1 else None
@@ -159,7 +165,7 @@ async def on_ready():
 
     scheduler = AsyncIOScheduler()
     scheduler.add_job(send_weekly_planning, 'cron', day_of_week='mon', hour=7, minute=0)
-    scheduler.add_job(update_classement, 'interval', minutes=10000)
+    scheduler.add_job(update_classement, 'interval', minutes=1)  # Test rapide
     scheduler.start()
 
 bot.run(TOKEN)
