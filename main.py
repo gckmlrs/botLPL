@@ -8,7 +8,7 @@ import os
 
 # === CONFIGURATION ===
 TOKEN = os.getenv('TOKEN')  # Récupération sécurisée du token
-CHANNEL_ID = 1366089873559392309
+CHANNEL_ID = 13660898735593923
 
 API_URL = "https://esports-api.lolesports.com/persisted/gw/getSchedule"
 API_KEY = "0TvQnueqKa5mxJntVWt0w4LpLfEkrV1Ta8rQBb9Z"
