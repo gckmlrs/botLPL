@@ -1,6 +1,7 @@
 import discord
 from discord.ext import commands
 import requests
+from bs4 import BeautifulSoup
 from datetime import datetime, timedelta, timezone
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 import asyncio
@@ -13,12 +14,10 @@ CLASSEMENT_CHANNEL_ID = 1366478478475657246
 NOTIF_ROLE_ID = 1366444786382409759
 
 API_URL_SCHEDULE = "https://esports-api.lolesports.com/persisted/gw/getSchedule"
-API_URL_STANDINGS = "https://esports-api.lolesports.com/persisted/gw/getStandings"
 API_KEY = "0TvQnueqKa5mxJntVWt0w4LpLfEkrV1Ta8rQBb9Z"
 HEADERS = {"x-api-key": API_KEY}
 PARAMS = {"hl": "fr-FR"}
 
-LPL_LEAGUE_ID = "98767991302996019"  # ID officiel de la LPL
 LPL_TEAMS = [
     "JDG", "TES", "BLG", "EDG", "WBG", "RNG", "LNG", "IG",
     "OMG", "AL", "FPX", "TT", "UP", "RA", "NIP", "LGD"
@@ -104,24 +103,41 @@ async def send_weekly_planning():
         if notif_role:
             await channel.send(f"{notif_role.mention}\n{planning_text}")
 
-# === CLASSEMENT ===
+# === CLASSEMENT (Scraping Flashscore) ===
+FLASHSCORE_URL = "https://www.flashscore.fr/esports/league-of-legends/lpl/classement/"
+
+def get_lpl_classement_from_flashscore():
+    response = requests.get(FLASHSCORE_URL, headers={"User-Agent": "Mozilla/5.0"})
+    if response.status_code != 200:
+        return None
+
+    soup = BeautifulSoup(response.text, 'html.parser')
+    classement_text = "📊 **Classement LPL (Source: Flashscore)** 📊\n"
+
+    teams = soup.select('div.table__row')
+    rank = 1
+    for team in teams:
+        name_tag = team.select_one('div.table__cell--participant')
+        stats_tag = team.select_one('div.table__cell--main')
+        if name_tag and stats_tag:
+            name = name_tag.get_text(strip=True)
+            stats = stats_tag.get_text(strip=True)
+            classement_text += f"{rank}️⃣ {name} | {stats}\n"
+            rank += 1
+        if rank > 10:  # Limite à top 10 pour éviter d'alourdir
+            break
+
+    return classement_text if rank > 1 else None
+
 async def update_classement():
     channel = bot.get_channel(CLASSEMENT_CHANNEL_ID)
     if not channel:
         return
-    params = {"hl": "fr-FR", "leagueId": LPL_LEAGUE_ID}
-    response = requests.get(API_URL_STANDINGS, headers=HEADERS, params=params)
-    if response.status_code != 200:
-        await channel.send("❌ Impossible de récupérer le classement.")
+
+    classement_text = get_lpl_classement_from_flashscore()
+    if not classement_text:
+        await channel.send("❌ Impossible de récupérer le classement depuis Flashscore.")
         return
-    standings = response.json()['data']['standings'][0]['teams']
-    classement_text = "📊 **Classement LPL (Auto-Update)** 📊\n"
-    rank = 1
-    for team in standings:
-        name = team['name']
-        record = f"{team['record']['wins']}-{team['record']['losses']}"
-        classement_text += f"{rank}️⃣ {name} | {record}\n"
-        rank += 1
 
     async for msg in channel.history(limit=10):
         if msg.author == bot.user and "📊 **Classement LPL" in msg.content:
@@ -143,7 +159,7 @@ async def on_ready():
 
     scheduler = AsyncIOScheduler()
     scheduler.add_job(send_weekly_planning, 'cron', day_of_week='mon', hour=7, minute=0)
-    scheduler.add_job(update_classement, 'interval', minutes=5)
+    scheduler.add_job(update_classement, 'interval', hours=1)  # Mieux vaut espacer pour le scraping
     scheduler.start()
 
 bot.run(TOKEN)
