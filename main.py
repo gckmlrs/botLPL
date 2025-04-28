@@ -9,6 +9,7 @@ import os
 # === CONFIGURATION ===
 TOKEN = os.getenv('TOKEN')
 CHANNEL_ID = 1366089873559392309
+NOTIF_ROLE_ID = 1366444786382409759  # ID du rôle "Notifications"
 
 API_URL = "https://esports-api.lolesports.com/persisted/gw/getSchedule"
 API_KEY = "0TvQnueqKa5mxJntVWt0w4LpLfEkrV1Ta8rQBb9Z"
@@ -20,7 +21,6 @@ LPL_TEAMS = [
     "OMG", "AL", "FPX", "TT", "UP", "RA", "NIP", "LGD"
 ]
 
-# Traduction des jours en français
 JOURS_FR = {
     "Monday": "Lundi",
     "Tuesday": "Mardi",
@@ -83,44 +83,15 @@ def generate_planning_text(planning):
     if not planning:
         return "❌ Aucun match prévu pour les équipes LPL cette semaine."
 
-    # Tri par date réelle
     planning.sort(key=lambda x: x['datetime'])
 
     result = "🇨🇳 **Planning des Équipes LPL (7 jours à venir)** 🇨🇳\n\n"
     current_day = ""
 
     for match in planning:
-        # Traduction du jour
         day_eng = match['datetime'].strftime("%A")
         jour_fr = JOURS_FR.get(day_eng, day_eng)
         date_fr = match['datetime'].strftime(f"{jour_fr} %d %B %Y")
 
         if date_fr != current_day:
-            current_day = date_fr
-            result += f"\n📅 **{current_day}**\n"
-
-        result += f" - {match['heure']} : {match['team1']} vs {match['team2']} _(Compétition : {match['league']})_\n"
-
-    return result
-
-async def send_weekly_planning():
-    channel = bot.get_channel(CHANNEL_ID)
-    if channel:
-        events = get_full_schedule()
-        lpl_matches = filter_lpl_matches(events)
-        planning_text = generate_planning_text(lpl_matches)
-        await channel.send(f"@everyone\n{planning_text}")
-
-@bot.event
-async def on_ready():
-    print(f'✅ {bot.user} est connecté et prêt à l’action !')
-    channel = bot.get_channel(CHANNEL_ID)
-    if channel:
-        await channel.send("✅ **LPL FRANCE BOT est en ligne !** Prêt à partager le planning des matchs ! 🏆")
-
-    scheduler = AsyncIOScheduler()
-    scheduler.add_job(send_weekly_planning, 'cron', day_of_week='mon', hour=7, minute=0)
-   # scheduler.add_job(send_weekly_planning, 'interval', minutes=1)
-    scheduler.start()
-
-bot.run(TOKEN)
+            current_day =
