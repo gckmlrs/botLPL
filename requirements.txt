@@ -2,3 +2,4 @@ discord.py
 requests
 apscheduler
 flask
+beautifulsoup4
