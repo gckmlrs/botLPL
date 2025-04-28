@@ -159,7 +159,7 @@ async def on_ready():
 
     scheduler = AsyncIOScheduler()
     scheduler.add_job(send_weekly_planning, 'cron', day_of_week='mon', hour=7, minute=0)
-    scheduler.add_job(update_classement, 'interval', minutes=1)
+    scheduler.add_job(update_classement, 'interval', minutes=10000)
     scheduler.start()
 
 bot.run(TOKEN)
