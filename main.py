@@ -93,7 +93,7 @@ async def send_weekly_planning():
 async def on_ready():
     print(f'✅ {bot.user} est connecté et prêt à l’action !')
     scheduler = AsyncIOScheduler()
-    scheduler.add_job(send_weekly_planning, 'cron', day_of_week='mon', hour=7, minute=0)  # Chaque lundi à 7h
+    scheduler.add_job(send_weekly_planning, 'interval', minutes=1) # Chaque lundi à 7h
     scheduler.start()
 
 # === LANCEMENT DU BOT ===
