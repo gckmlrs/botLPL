@@ -94,4 +94,34 @@ def generate_planning_text(planning):
         date_fr = match['datetime'].strftime(f"{jour_fr} %d %B %Y")
 
         if date_fr != current_day:
-            current_day =
+            current_day = date_fr
+            result += f"\n📅 **{current_day}**\n"
+
+        result += f" - {match['heure']} : {match['team1']} vs {match['team2']} _(Compétition : {match['league']})_\n"
+
+    return result
+
+async def send_weekly_planning():
+    channel = bot.get_channel(CHANNEL_ID)
+    if channel:
+        events = get_full_schedule()
+        lpl_matches = filter_lpl_matches(events)
+        planning_text = generate_planning_text(lpl_matches)
+        notif_role = channel.guild.get_role(NOTIF_ROLE_ID)
+        if notif_role:
+            await channel.send(f"{notif_role.mention}\n{planning_text}")
+        else:
+            await channel.send(f"⚠️ Le rôle Notifications est introuvable.\n{planning_text}")
+
+@bot.event
+async def on_ready():
+    print(f'✅ {bot.user} est connecté et prêt à l’action !')
+    channel = bot.get_channel(CHANNEL_ID)
+    if channel:
+        await channel.send("✅ **LPL FRANCE BOT est en ligne !** Prêt à partager le planning des matchs ! 🏆")
+
+    scheduler = AsyncIOScheduler()
+    scheduler.add_job(send_weekly_planning, 'cron', day_of_week='mon', hour=7, minute=0)
+    scheduler.start()
+
+bot.run(TOKEN)
