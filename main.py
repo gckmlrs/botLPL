@@ -3,6 +3,7 @@ from discord.ext import commands
 import requests
 from datetime import datetime, timedelta, timezone
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
+from zoneinfo import ZoneInfo
 import os
 
 # === CONFIGURATION ===
@@ -54,14 +55,18 @@ def get_full_schedule():
 
 def filter_lpl_matches(events):
     planning = []
-    now = datetime.now(timezone.utc)
+    now = datetime.now(ZoneInfo("Europe/Paris"))
     end_date = now + timedelta(days=7)
     for match in events:
         if not match.get('match'):
             continue
-        start_time = datetime.fromisoformat(match['startTime'].replace('Z', '+00:00'))
+        # Conversion UTC vers heure de Paris
+        start_time_utc = datetime.fromisoformat(match['startTime'].replace('Z', '+00:00'))
+        start_time = start_time_utc.astimezone(ZoneInfo("Europe/Paris"))
+
         if not (now <= start_time <= end_date):
             continue
+
         team_names = [team['code'] for team in match['match']['teams']]
         if any(team in LPL_TEAMS for team in team_names):
             game_info = {
